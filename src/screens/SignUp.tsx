@@ -5,6 +5,7 @@ import {
   Text,
   Heading,
   ScrollView,
+  useToast,
 } from "@gluestack-ui/themed";
 
 import BackGroundImg from "@assets/background.png";
@@ -17,6 +18,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
+import { AppError } from "@utils/appError";
+import { ToastMessage } from "@components/toastMessage";
+import { api } from "@services/api";
 
 // Tipagem de formulário
 type FormData = {
@@ -38,6 +42,8 @@ const FormDataSchema = Yup.object().shape({
 });
 
 export function SignUp() {
+  const toast = useToast();
+
   const {
     control,
     handleSubmit,
@@ -52,7 +58,29 @@ export function SignUp() {
     navigation.goBack();
   }
 
-  function handleSignUp(data: FormData) {}
+  async function handleSignUp(data: FormData) {
+    try {
+      const res = await api.post("/users", data);
+      console.log(res);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível criar a conta. Tente novamente mais tarde.";
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            action="error"
+            title="Erro"
+            description={title}
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+    }
+  }
 
   return (
     <ScrollView
@@ -70,7 +98,7 @@ export function SignUp() {
         />
 
         <VStack flex={1} px="$10" pb="$16">
-          <Center my="$24">
+          <Center my="$20">
             <Logo />
             <Text color="$gray100" fontSize="$sm">
               Treine sua mente e o seu corpo.
